@@ -1,0 +1,11 @@
+.battery-label {
+    font-family: "JetBrainsMono Nerd Font";
+    font-weight: bold;
+    background-color: #313244;
+    padding: 4px 12px;
+    border-radius: 15px;
+    margin-right: 8px;
+    /* Space between battery and clock */
+    color: #a6e3a1;
+    /* Greenish color for battery */
+}

@@ -1,0 +1,14 @@
+* {
+    all: unset;
+}
+
+window {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+}
+
+
+.title-label {
+    font-weight: bold;
+    color: #f5c2e7;
+}

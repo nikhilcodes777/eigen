@@ -1,0 +1,8 @@
+.clock-label {
+    font-family: "JetBrainsMono Nerd Font";
+    font-weight: bold;
+    background-color: #313244;
+    padding: 4px 12px;
+    color: #f5c2e7;
+    border-radius: 15px;
+}
