@@ -1,22 +1,32 @@
-use eigen::widgets::{battery::Battery, clock::Clock, workspaces::WorkspacesModel};
+use eigen::ipc;
+use eigen::widgets::{
+    battery::Battery, clock::Clock, launcher::Launcher, launcher::LauncherMsg,
+    workspaces::WorkspacesModel,
+};
 use gtk::prelude::*;
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use relm4::prelude::*;
+
+// ── Bar ──
+
 struct BarConfig {
     title: String,
     timeformat: String,
     ws_count: u8,
 }
+
 struct Bar {
     workspaces: Controller<WorkspacesModel>,
     battery: Controller<Battery>,
     clock: Controller<Clock>,
+    #[allow(dead_code)]
+    launcher: Controller<Launcher>,
 }
 
 #[relm4::component]
 impl SimpleComponent for Bar {
     type Init = BarConfig;
-    type Input = ();
+    type Input = BarMsg;
     type Output = ();
 
     view! {
@@ -42,7 +52,7 @@ impl SimpleComponent for Bar {
                     set_spacing: 5,
                     append = model.battery.widget(),
                     append = model.clock.widget(),
-                }
+                },
             }
         }
     }
@@ -54,7 +64,7 @@ impl SimpleComponent for Bar {
     ) -> ComponentParts<Self> {
         root.init_layer_shell();
         root.set_layer(Layer::Top);
-        root.set_anchor(Edge::Top, true);
+        root.set_anchor(Edge::Bottom, true);
         root.set_anchor(Edge::Left, true);
         root.set_anchor(Edge::Right, true);
         root.auto_exclusive_zone_enable();
@@ -66,13 +76,31 @@ impl SimpleComponent for Bar {
             &provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
+
         let clock = Clock::builder().launch(config.timeformat).detach();
         let battery = Battery::builder().launch(()).detach();
         let workspaces = WorkspacesModel::builder().launch(config.ws_count).detach();
+        let launcher = Launcher::builder().launch(()).detach();
+
+        // ── Start IPC listener ──
+        let launcher_sender = launcher.sender().clone();
+        ipc::start_listener(move |cmd| {
+            match cmd.trim() {
+                "toggle-launcher" => {
+                    // Send the toggle message to the launcher component
+                    launcher_sender.send(LauncherMsg::Toggle).ok();
+                }
+                other => {
+                    eprintln!("[eigen] Unknown IPC command: {other}");
+                }
+            }
+        });
+
         let model = Bar {
             workspaces,
             clock,
             battery,
+            launcher,
         };
 
         let widgets = view_output!();
@@ -84,12 +112,75 @@ impl SimpleComponent for Bar {
     fn update(&mut self, _msg: Self::Input, _sender: ComponentSender<Self>) {}
 }
 
+#[derive(Debug)]
+enum BarMsg {}
+
 const CSS_STR: &str = include_str!("css/style.css");
+
+use clap::{Parser, Subcommand};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Initialize the daemon
+    Init,
+    /// Toggle the launcher
+    ToggleLauncher,
+    /// View logs
+    Logs,
+}
+
 fn main() {
-    let app = RelmApp::new("com.eigen.shell");
-    app.run::<Bar>(BarConfig {
-        title: "Eigen Bar".into(),
-        timeformat: "%H:%M:%S".into(),
-        ws_count: 5,
-    });
+    let cli = Cli::parse();
+    
+    let log_file_path = "/tmp/eigen.log";
+
+    if let Some(Commands::Logs) = cli.command {
+        let _ = std::process::Command::new("tail")
+            .arg("-f")
+            .arg(log_file_path)
+            .status();
+        return;
+    }
+
+    let file_appender = tracing_appender::rolling::never("/tmp", "eigen.log");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+    
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
+        .init();
+
+    tracing::info!("Starting eigen shell...");
+
+    match cli.command.unwrap_or(Commands::Init) {
+        Commands::Init => {
+            // Run the daemon (bar + launcher)
+            let app = RelmApp::new("com.eigen.shell");
+            app.run::<Bar>(BarConfig {
+                title: "Eigen Bar".into(),
+                timeformat: "%H:%M:%S".into(),
+                ws_count: 5,
+            });
+        }
+        Commands::ToggleLauncher => {
+            // Send IPC signal to the running daemon
+            if let Err(e) = ipc::send_command("toggle-launcher") {
+                tracing::error!("Failed to reach daemon: {e}");
+                eprintln!("eigen: Failed to reach daemon: {e}");
+                eprintln!("  Is `eigen init` running?");
+                std::process::exit(1);
+            }
+        }
+        Commands::Logs => unreachable!(),
+    }
 }

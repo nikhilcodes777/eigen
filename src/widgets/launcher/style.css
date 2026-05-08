@@ -1,0 +1,126 @@
+/* ── Eigen Launcher ── Catppuccin Mocha ── */
+
+/* Override the global window background — the launcher window must be transparent */
+window.launcher-window {
+    background-color: transparent;
+}
+
+/* The overlay window is transparent — full screen to catch clicks */
+.launcher-overlay {
+    background-color: transparent;
+}
+
+/* The actual launcher panel */
+.launcher-panel {
+    background-color: alpha(#1e1e2e, 0.95);
+    border-radius: 16px 16px 0 0;
+    padding: 0;
+    min-width: 580px;
+    min-height: 480px;
+}
+
+.launcher-panel-inner {
+    padding: 16px;
+    padding-bottom: 0;
+}
+
+/* Inverse rounded corner cutouts — small squares with radial mask */
+.inverse-corner-left,
+.inverse-corner-right {
+    min-width: 16px;
+    min-height: 16px;
+    background-color: transparent;
+}
+
+.inverse-corner-left {
+    background-image: radial-gradient(circle at 0 0, transparent 16px, alpha(#1e1e2e, 0.95) 16px);
+}
+
+.inverse-corner-right {
+    background-image: radial-gradient(circle at 100% 0, transparent 16px, alpha(#1e1e2e, 0.95) 16px);
+}
+
+/* The bottom strip that houses the inverse corners */
+.launcher-bottom-strip {
+    background-color: transparent;
+}
+
+/* ── Search ── */
+.launcher-search {
+    background-color: #313244;
+    color: #cdd6f4;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    caret-color: #cba6f7;
+    border: 1px solid #45475a;
+    min-height: 20px;
+}
+
+.launcher-search:focus {
+    border-color: #cba6f7;
+    background-color: #45475a;
+}
+
+/* ── App List ── */
+.launcher-list {
+    background-color: transparent;
+}
+
+.launcher-list row {
+    padding: 0;
+    margin: 0;
+    border-radius: 10px;
+    background-color: transparent;
+    outline: none;
+    border: none;
+}
+
+.launcher-list row:selected {
+    background-color: alpha(#cba6f7, 0.15);
+}
+
+.launcher-list row:hover {
+    background-color: alpha(#cba6f7, 0.10);
+}
+
+.launcher-app-row {
+    padding: 8px 12px;
+    margin: 2px 0;
+}
+
+.launcher-app-icon {
+    min-width: 40px;
+    min-height: 40px;
+    margin-right: 14px;
+}
+
+.launcher-app-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #cdd6f4;
+}
+
+.launcher-app-desc {
+    font-size: 12px;
+    color: #a6adc8;
+    margin-top: 2px;
+}
+
+/* Scrollbar styling */
+.launcher-scroll undershoot,
+.launcher-scroll overshoot {
+    background: none;
+}
+
+.launcher-scroll scrollbar slider {
+    background-color: #585b70;
+    border-radius: 99px;
+    min-width: 4px;
+}
+
+.launcher-scroll scrollbar slider:hover {
+    background-color: #cba6f7;
+}
+
