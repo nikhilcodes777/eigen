@@ -1,9 +1,6 @@
 use gtk::prelude::*;
-use hyprland::{
-    data::{Workspace, Workspaces},
-    event_listener::EventListener,
-    shared::{HyprData, HyprDataActive},
-};
+pub mod provider;
+use provider::get_provider;
 use relm4::{factory::FactoryView, prelude::*};
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum WsState {
@@ -76,11 +73,13 @@ impl FactoryComponent for WorkspaceItem {
 #[derive(Debug)]
 pub struct WorkspacesModel {
     workspaces: FactoryVecDeque<WorkspaceItem>,
+    provider: Box<dyn provider::WorkspaceProvider + Send>,
+    count: i32,
 }
 
 #[derive(Debug)]
 pub enum WorkspacesMsg {
-    HyprEvent,
+    ProviderEvent,
 }
 
 #[relm4::component(pub)]
@@ -109,52 +108,51 @@ impl SimpleComponent for WorkspacesModel {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let mut workspaces = FactoryVecDeque::builder()
+        let workspaces = FactoryVecDeque::builder()
             .launch(gtk::Box::default())
             .detach();
-        for id in 1..=count {
-            workspaces.guard().push_back(id);
-        }
-        let model = WorkspacesModel { workspaces };
+        
+        let mut provider = get_provider();
+        let count_i32 = count as i32;
+        let s = sender.clone();
+        provider.start(Box::new(move || {
+            s.input(WorkspacesMsg::ProviderEvent);
+        }));
+        
+        let model = WorkspacesModel { workspaces, provider, count: count_i32 };
         let ws_factory_box = model.workspaces.widget();
         let widgets = view_output!();
-        let s = sender.clone();
-        std::thread::spawn(move || {
-            let mut listener = EventListener::new();
-
-            listener.add_workspace_changed_handler(move |_| {
-                s.input(WorkspacesMsg::HyprEvent);
-            });
-
-            listener.start_listener().unwrap();
-        });
-        sender.input(WorkspacesMsg::HyprEvent);
+        
+        sender.input(WorkspacesMsg::ProviderEvent);
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
         match msg {
-            WorkspacesMsg::HyprEvent => {
-                let active_id = Workspace::get_active().map(|w| w.id).unwrap_or(0);
-                let all_workspaces = Workspaces::get().expect("Error getting all workspaces");
+            WorkspacesMsg::ProviderEvent => {
+                let ws_data = self.provider.get_workspaces(self.count);
+
+                let current_len = self.workspaces.len();
+                let target_len = ws_data.len();
+
+                if target_len > current_len {
+                    let mut guard = self.workspaces.guard();
+                    for i in current_len..target_len {
+                        guard.push_back(ws_data[i].id as u8);
+                    }
+                } else if target_len < current_len {
+                    let mut guard = self.workspaces.guard();
+                    for _ in target_len..current_len {
+                        guard.pop_back();
+                    }
+                }
+
                 let mut updates = Vec::new();
-
                 for (index, item) in self.workspaces.guard().iter().enumerate() {
-                    let ws_id = (index + 1) as i32;
-
-                    let new_state = if ws_id == active_id {
-                        WsState::Focused
-                    } else if all_workspaces
-                        .iter()
-                        .any(|w| w.id == ws_id && w.windows > 0)
-                    {
-                        WsState::Occupied
-                    } else {
-                        WsState::Unused
-                    };
-
-                    if item.state != new_state {
-                        updates.push((index, new_state));
+                    if let Some(data) = ws_data.get(index) {
+                        if item.state != data.state {
+                            updates.push((index, data.state));
+                        }
                     }
                 }
                 for (index, new_state) in updates {
