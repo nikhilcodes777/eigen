@@ -7,6 +7,7 @@ pub struct DesktopEntry {
     pub description: String,
     pub exec: String,
     pub icon: String,
+    pub categories: Vec<String>,
 }
 
 /// Scan standard XDG directories for `.desktop` files and parse them.
@@ -58,6 +59,7 @@ fn parse_desktop_file(path: &PathBuf) -> Option<DesktopEntry> {
     let mut comment = String::new();
     let mut exec = String::new();
     let mut icon = String::new();
+    let mut categories = Vec::new();
     let mut no_display = false;
     let mut is_app = false;
     let mut in_desktop_entry = false;
@@ -89,6 +91,9 @@ fn parse_desktop_file(path: &PathBuf) -> Option<DesktopEntry> {
                 "Comment" => comment = value.to_string(),
                 "Exec" => exec = value.to_string(),
                 "Icon" => icon = value.to_string(),
+                "Categories" => {
+                    categories = value.split(';').filter(|s| !s.is_empty()).map(|s| s.to_string()).collect();
+                }
                 "NoDisplay" => no_display = value.eq_ignore_ascii_case("true"),
                 "Type" => is_app = value == "Application",
                 _ => {}
@@ -112,5 +117,6 @@ fn parse_desktop_file(path: &PathBuf) -> Option<DesktopEntry> {
         description: comment,
         exec: exec_clean,
         icon,
+        categories,
     })
 }

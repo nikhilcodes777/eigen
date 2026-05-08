@@ -2,6 +2,7 @@ use eigen::ipc;
 use eigen::widgets::{
     battery::Battery, clock::Clock, launcher::Launcher, launcher::LauncherMsg,
     workspaces::WorkspacesModel, dashboard::Dashboard, dashboard::DashboardMsg,
+    desktop_menu::DesktopMenu,
 };
 use gtk::prelude::*;
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -23,6 +24,8 @@ struct Bar {
     launcher: Controller<Launcher>,
     #[allow(dead_code)]
     dashboard: Controller<Dashboard>,
+    #[allow(dead_code)]
+    desktop_menu: Controller<DesktopMenu>,
 }
 
 #[relm4::component]
@@ -95,6 +98,7 @@ impl SimpleComponent for Bar {
         let workspaces = WorkspacesModel::builder().launch(config.ws_count).detach();
         let launcher = Launcher::builder().launch(()).detach();
         let dashboard = Dashboard::builder().launch(()).detach();
+        let desktop_menu = DesktopMenu::builder().launch(()).detach();
 
         // ── Start IPC listener ──
         let launcher_sender = launcher.sender().clone();
@@ -120,6 +124,7 @@ impl SimpleComponent for Bar {
             battery,
             launcher,
             dashboard,
+            desktop_menu,
         };
 
         let widgets = view_output!();

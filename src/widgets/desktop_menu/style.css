@@ -1,0 +1,32 @@
+window.desktop-bg-window {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.desktop-menu-overlay {
+    background-color: transparent;
+}
+
+popover.desktop-popover-menu > contents {
+    background-color: rgba(30, 30, 46, 0.95); /* Catppuccin Mocha Base */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+popover.desktop-popover-menu modelbutton {
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: #cdd6f4;
+    font-weight: 500;
+}
+
+popover.desktop-popover-menu modelbutton:hover {
+    background-color: rgba(203, 166, 247, 0.15); /* Mocha Mauve hover */
+    color: #cba6f7;
+}
+
+popover.desktop-popover-menu separator {
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+}
