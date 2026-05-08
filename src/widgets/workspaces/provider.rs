@@ -9,7 +9,7 @@ pub struct WorkspaceData {
 }
 
 pub trait WorkspaceProvider {
-    fn start(&mut self, on_update: Box<dyn Fn() + Send + 'static>);
+    fn start(&mut self, on_update: Box<dyn Fn() + Send + Sync + 'static>);
     fn get_workspaces(&self, count: i32) -> Vec<WorkspaceData>;
 }
 
@@ -37,6 +37,12 @@ pub mod hyprland_provider {
 
     pub struct HyprlandProvider;
 
+    impl Default for HyprlandProvider {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl HyprlandProvider {
         pub fn new() -> Self {
             Self
@@ -44,7 +50,7 @@ pub mod hyprland_provider {
     }
 
     impl WorkspaceProvider for HyprlandProvider {
-        fn start(&mut self, on_update: Box<dyn Fn() + Send + 'static>) {
+        fn start(&mut self, on_update: Box<dyn Fn() + Send + Sync + 'static>) {
             std::thread::spawn(move || {
                 let mut listener = EventListener::new();
 
@@ -97,6 +103,12 @@ pub mod niri_provider {
         state: Arc<Mutex<EventStreamState>>,
     }
 
+    impl Default for NiriProvider {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl NiriProvider {
         pub fn new() -> Self {
             Self {
@@ -106,7 +118,7 @@ pub mod niri_provider {
     }
 
     impl WorkspaceProvider for NiriProvider {
-        fn start(&mut self, on_update: Box<dyn Fn() + Send + 'static>) {
+        fn start(&mut self, on_update: Box<dyn Fn() + Send + Sync + 'static>) {
             let state = self.state.clone();
             std::thread::spawn(move || {
                 let mut socket = match Socket::connect() {

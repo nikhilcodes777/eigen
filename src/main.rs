@@ -1,7 +1,7 @@
 use eigen::ipc;
 use eigen::widgets::{
     battery::Battery, clock::Clock, launcher::Launcher, launcher::LauncherMsg,
-    workspaces::WorkspacesModel,
+    workspaces::WorkspacesModel, dashboard::Dashboard, dashboard::DashboardMsg,
 };
 use gtk::prelude::*;
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
@@ -21,6 +21,8 @@ struct Bar {
     clock: Controller<Clock>,
     #[allow(dead_code)]
     launcher: Controller<Launcher>,
+    #[allow(dead_code)]
+    dashboard: Controller<Dashboard>,
 }
 
 #[relm4::component]
@@ -39,7 +41,18 @@ impl SimpleComponent for Bar {
             gtk::CenterBox {
                 set_margin_all: 5,
                 #[wrap(Some)]
-                set_start_widget = model.workspaces.widget(),
+                set_start_widget = &gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_spacing: 5,
+                    gtk::Button {
+                        set_label: "",
+                        add_css_class: "dashboard-btn",
+                        connect_clicked[sender] => move |_| {
+                            sender.input(BarMsg::ToggleDashboard);
+                        }
+                    },
+                    append = model.workspaces.widget(),
+                },
                 #[wrap(Some)]
                 set_center_widget = &gtk::Label {
                     set_label: config.title.as_str(),
@@ -60,7 +73,7 @@ impl SimpleComponent for Bar {
     fn init(
         config: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         root.init_layer_shell();
         root.set_layer(Layer::Top);
@@ -81,14 +94,19 @@ impl SimpleComponent for Bar {
         let battery = Battery::builder().launch(()).detach();
         let workspaces = WorkspacesModel::builder().launch(config.ws_count).detach();
         let launcher = Launcher::builder().launch(()).detach();
+        let dashboard = Dashboard::builder().launch(()).detach();
 
         // ── Start IPC listener ──
         let launcher_sender = launcher.sender().clone();
+        let dashboard_sender = dashboard.sender().clone();
         ipc::start_listener(move |cmd| {
             match cmd.trim() {
                 "toggle-launcher" => {
                     // Send the toggle message to the launcher component
                     launcher_sender.send(LauncherMsg::Toggle).ok();
+                }
+                "toggle-dashboard" => {
+                    dashboard_sender.send(DashboardMsg::Toggle).ok();
                 }
                 other => {
                     eprintln!("[eigen] Unknown IPC command: {other}");
@@ -101,6 +119,7 @@ impl SimpleComponent for Bar {
             clock,
             battery,
             launcher,
+            dashboard,
         };
 
         let widgets = view_output!();
@@ -109,11 +128,19 @@ impl SimpleComponent for Bar {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, _msg: Self::Input, _sender: ComponentSender<Self>) {}
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+        match msg {
+            BarMsg::ToggleDashboard => {
+                self.dashboard.sender().send(DashboardMsg::Toggle).ok();
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
-enum BarMsg {}
+enum BarMsg {
+    ToggleDashboard,
+}
 
 const CSS_STR: &str = include_str!("css/style.css");
 
@@ -133,6 +160,8 @@ enum Commands {
     Init,
     /// Toggle the launcher
     ToggleLauncher,
+    /// Toggle the dashboard
+    ToggleDashboard,
     /// View logs
     Logs,
 }
@@ -175,6 +204,14 @@ fn main() {
         Commands::ToggleLauncher => {
             // Send IPC signal to the running daemon
             if let Err(e) = ipc::send_command("toggle-launcher") {
+                tracing::error!("Failed to reach daemon: {e}");
+                eprintln!("eigen: Failed to reach daemon: {e}");
+                eprintln!("  Is `eigen init` running?");
+                std::process::exit(1);
+            }
+        }
+        Commands::ToggleDashboard => {
+            if let Err(e) = ipc::send_command("toggle-dashboard") {
                 tracing::error!("Failed to reach daemon: {e}");
                 eprintln!("eigen: Failed to reach daemon: {e}");
                 eprintln!("  Is `eigen init` running?");

@@ -40,15 +40,14 @@ pub fn load_desktop_entries() -> Vec<DesktopEntry> {
             if path.extension().and_then(|e| e.to_str()) != Some("desktop") {
                 continue;
             }
-            if let Some(de) = parse_desktop_file(&path) {
-                if seen_names.insert(de.name.clone()) {
+            if let Some(de) = parse_desktop_file(&path)
+                && seen_names.insert(de.name.clone()) {
                     entries.push(de);
                 }
-            }
         }
     }
 
-    entries.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    entries.sort_by_key(|a| a.name.to_lowercase());
     entries
 }
 

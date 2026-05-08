@@ -264,14 +264,12 @@ impl Component for Launcher {
                     self.apply_filter();
                     if let Some(lb_widget) =
                         find_child_by_css_class(root.child().as_ref(), "launcher-list")
-                    {
-                        if let Some(lb) = lb_widget.downcast_ref::<gtk::ListBox>() {
+                        && let Some(lb) = lb_widget.downcast_ref::<gtk::ListBox>() {
                             populate_list(lb, &self.filtered);
                             if let Some(first) = lb.row_at_index(0) {
                                 lb.select_row(Some(&first));
                             }
                         }
-                    }
                     root.set_visible(true);
                     root.present();
                     if let Some(revealer) =
@@ -295,14 +293,12 @@ impl Component for Launcher {
                 self.apply_filter();
                 if let Some(lb_widget) =
                     find_child_by_css_class(root.child().as_ref(), "launcher-list")
-                {
-                    if let Some(lb) = lb_widget.downcast_ref::<gtk::ListBox>() {
+                    && let Some(lb) = lb_widget.downcast_ref::<gtk::ListBox>() {
                         populate_list(lb, &self.filtered);
                         if let Some(first) = lb.row_at_index(0) {
                             lb.select_row(Some(&first));
                         }
                     }
-                }
             }
             LauncherMsg::Activate(index) => {
                 tracing::info!("Activating launcher item at index {}", index);
@@ -341,11 +337,10 @@ fn hide_launcher(model: &mut Launcher, root: &gtk::Window) {
     }
 
     // 3. Reset search entry (triggers SearchChanged but we bail early since !visible)
-    if let Some(search) = find_child_by_css_class(root.child().as_ref(), "launcher-search") {
-        if let Some(se) = search.downcast_ref::<gtk::SearchEntry>() {
+    if let Some(search) = find_child_by_css_class(root.child().as_ref(), "launcher-search")
+        && let Some(se) = search.downcast_ref::<gtk::SearchEntry>() {
             se.set_text("");
         }
-    }
     model.query.clear();
 }
 
@@ -356,13 +351,12 @@ fn move_selection(list_box: &gtk::ListBox, delta: i32) {
         .map(|r| r.index())
         .unwrap_or(-1);
     let next_idx = current_idx + delta;
-    if next_idx >= 0 {
-        if let Some(row) = list_box.row_at_index(next_idx) {
+    if next_idx >= 0
+        && let Some(row) = list_box.row_at_index(next_idx) {
             list_box.select_row(Some(&row));
             // Scroll the selected row into view
             row.grab_focus();
         }
-    }
 }
 
 /// Find a child widget of a specific GObject type by walking the tree.

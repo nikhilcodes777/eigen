@@ -1,0 +1,114 @@
+.dashboard-window {
+    background-color: transparent;
+}
+
+.dashboard-panel {
+    background-color: alpha(#1e1e2e, 0.95);
+    border-radius: 16px 16px 0 0;
+    padding: 24px;
+    min-width: 320px;
+}
+
+.profile-section {
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-pic {
+    border-radius: 50%;
+    border: 2px solid #89b4fa; /* Catppuccin blue */
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #cdd6f4; /* Catppuccin text */
+}
+
+.profile-uptime {
+    font-size: 13px;
+    color: #a6adc8; /* Catppuccin subtext0 */
+    margin-top: 4px;
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #f38ba8; /* Catppuccin red */
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #bac2de;
+    font-weight: bold;
+}
+
+.stat-value {
+    font-size: 13px;
+    color: #cdd6f4;
+    font-family: monospace;
+}
+
+.cpu-bar > trough > progress {
+    background-color: #a6e3a1; /* Catppuccin green */
+    border-radius: 4px;
+}
+
+.ram-bar > trough > progress {
+    background-color: #fab387; /* Catppuccin peach */
+    border-radius: 4px;
+}
+
+.swap-bar > trough > progress {
+    background-color: #f9e2af; /* Catppuccin yellow */
+    border-radius: 4px;
+}
+
+progressbar > trough {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    min-height: 8px;
+}
+
+.small-stat-box {
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.small-stat-label {
+    font-size: 11px;
+    color: #a6adc8;
+    margin-bottom: 4px;
+}
+
+.small-stat-value {
+    font-size: 13px;
+    font-weight: bold;
+    color: #89b4fa;
+}
+
+.graphs-section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.inverse-corner-left, .inverse-corner-right {
+    min-width: 16px;
+    min-height: 16px;
+    background-color: transparent;
+}
+
+.inverse-corner-left {
+    background-image: radial-gradient(circle at 0 0, transparent 16px, alpha(#1e1e2e, 0.95) 16px);
+}
+
+.inverse-corner-right {
+    background-image: radial-gradient(circle at 100% 0, transparent 16px, alpha(#1e1e2e, 0.95) 16px);
+}

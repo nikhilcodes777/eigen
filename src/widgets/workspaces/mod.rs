@@ -137,8 +137,8 @@ impl SimpleComponent for WorkspacesModel {
 
                 if target_len > current_len {
                     let mut guard = self.workspaces.guard();
-                    for i in current_len..target_len {
-                        guard.push_back(ws_data[i].id as u8);
+                    for data in ws_data.iter().take(target_len).skip(current_len) {
+                        guard.push_back(data.id as u8);
                     }
                 } else if target_len < current_len {
                     let mut guard = self.workspaces.guard();
@@ -149,11 +149,10 @@ impl SimpleComponent for WorkspacesModel {
 
                 let mut updates = Vec::new();
                 for (index, item) in self.workspaces.guard().iter().enumerate() {
-                    if let Some(data) = ws_data.get(index) {
-                        if item.state != data.state {
+                    if let Some(data) = ws_data.get(index)
+                        && item.state != data.state {
                             updates.push((index, data.state));
                         }
-                    }
                 }
                 for (index, new_state) in updates {
                     self.workspaces
